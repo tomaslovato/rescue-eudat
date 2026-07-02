@@ -1,4 +1,4 @@
 variables:
 - SImon: {'variables':['siage', 'siconc', 'sithick'],}
-- Oday_sios: {'Frequency': 'Oday',}
-- Omon_thetao: {'Frequency': 'Omon',}
+- Oday_sios: {}
+- Omon_thetao: {}
