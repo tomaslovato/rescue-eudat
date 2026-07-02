@@ -1,0 +1,90 @@
+access:
+  record: public
+  files: public
+metadata:
+  resource_types:
+  - id: dataset
+  title: RESCUE_expname_yearspan_CMCC-ESM2
+  description: '<div>
+
+    <p><strong>Project:</strong>&nbsp;Horizon Europe - RESCUE</p>
+
+    <p><strong>Experiment:</strong></p>
+
+    <ul>
+
+    <li><strong>Name: </strong>expname</li>
+
+    <li><strong>Description:</strong> expdescr</li>
+
+    </ul>
+
+    <p><strong>Model:</strong> CMCC-ESM2</p>
+
+    <p><strong>Period:</strong> yearspan </p>
+
+    <p><strong>Member:</strong>&nbsp;themember</p>
+
+    <p><strong>Grid type:</strong>&nbsp;gn (native grid)</p>
+
+    <p><strong>Resolution:</strong></p>
+
+    <ul>
+
+    <li><strong>Atmosphere:</strong> 1&deg; (288 x 192 longitude/latitude; 30 levels;
+    top at ~2 hPa)<br><strong>Ocean:</strong> ~1&deg; (ORCA1 grid), 50 vertical levels</li>
+
+    </ul>
+
+    <p><strong>Frequency:</strong></p>
+
+    <ul>
+
+    <li>data-frequency</li>
+
+    </ul>
+
+    <p><strong>Variables:</strong></p>
+
+    <ul>
+
+    variables_description
+
+    </ul>
+
+    <p><strong>Fundings:</strong><br>Produced with funding from the European Union&rsquo;s
+    Horizon Europe Research and Innovation Framework Programme under Grant Agreement
+    no. 10105693 (RESCUE)</p>
+
+    </div>'
+  publication_date: '2026-07-02'
+  publisher: CMCC Foundation - Euro-Mediterranean Center on Climate Change
+  creators:
+  temporal_coverage:
+  - ranges:
+      start_date: '2015-01-01'
+      end_date: '2100-12-31'
+  contact_emails:
+  - contact_email: tomas.lovato@cmcc.it
+  subjects:
+  - subject: Earth System
+  - subject: Climate Projections
+  - subject: Carbon Dioxide Removal
+  - subject: RESCUE-project
+  - subject: Emission driven simulation
+  version: '1.0'
+  identifiers:
+  - scheme: doi
+    identifier: 10.1029/2021MS002814
+  instruments:
+  - identifier: 10.1029/2021MS002814
+    scheme: doi
+    instrument_name: CMCC-ESM2
+  languages:
+  - id: eng
+    title:
+      en: English
+  rights:
+  - id: cc-by-4.0
+files:
+  enabled: true
