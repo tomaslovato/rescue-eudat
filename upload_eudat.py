@@ -50,8 +50,8 @@ def workflow(token, case, var_dict):
     print("Create Record")
     try:
         result = create_b2share_record(token=token, payload=payload)
-        print("Record created successfully!\n")
-        #print(result)
+        http_draft = result['links']['self_html']
+        print("Successfully created record: " + http_draft +  "!\n")
         rid = result['id']
     except requests.exceptions.HTTPError as err:
         print(f"HTTP Error occurred: {err}")
