@@ -239,7 +239,7 @@ def register_draft_files(token: str, record_id: str, dataset: dict) -> list:
             sys.exit(1)
 
 
-def upload_and_commit_file_to_draft(token: str, record_id: str,  dataset: dict) -> dict:
+def upload_and_commit_file_to_draft(token: str, record_id: str, dataset: dict) -> dict:
     """Uploads anc commit a local file's content to a registered placeholder in a draft record.
 
     :param token: The Bearer token for authentication.
@@ -318,6 +318,8 @@ def submit_draft_for_review(token: str, record_id: str,) -> list:
             print(f"Response: {response.text}")
             sys.exit(1)
 
+    return response.json()
+
 
 def request_draft_review(token: str, submit_link: str) -> list:
     """Sends a POST request to record submission using submit_link.
@@ -343,6 +345,8 @@ def request_draft_review(token: str, submit_link: str) -> list:
             print(f"Response: {response.text}")
             sys.exit(1)
 
+    return response.json()
+    
 
 def cmip_freq_long(freq):
     '''Return dataset frequency description '''
