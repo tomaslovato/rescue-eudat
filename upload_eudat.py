@@ -11,10 +11,9 @@ import yaml
 
 def main():
     ''' Code main driver. '''
+    from pathlib import Path
 
-    MY_TOKEN = (
-        "pIUYZFq6RDuYsScHcP4ZBfzBzmKfG12b75wnl48HxoqAJ1w9uD99FXYtTyAy"
-    )
+    MY_TOKEN = Path('MY_TOKEN').read_text()[:-1]
 
     # read arguments
     nargs=len(sys.argv)
@@ -269,17 +268,6 @@ def upload_and_commit_file_to_draft(token: str, record_id: str,  dataset: dict) 
             # Raise an exception if the response status is 4xx or 5xx
             response.raise_for_status()
 
-#url = f"https://b2share.eudat.eu/api/records/{record_id}/draft/files/{file_name}/commit"
-#
-#    headers = {
-#        "Authorization": f"Bearer {token}",
-#    }
-#
-#    # Making the POST request to commit the file.
-#    # Note: B2SHARE expects a POST with no body here.
-#    response = requests.post(url, headers=headers)
-#
-#    # Raise an exception if the response status is 4xx or 5xx
     return response.json()
 
 
@@ -360,16 +348,19 @@ def cmip_freq_long(freq):
 
 
 def get_table_and_varname(var_dict):
-
-    # get variables
-    key_split = list(var_dict.keys())[0].split('_')
-    if len(key_split) == 1:
-        table = key_split[0]
+    """Get table and variable names from input dict/list."""
+    
+    if isinstance(var_dict, dict):  
+        table = list(var_dict.keys())[0]
         varname = None
+        # TODO later on add case for year subsamples
+    elif isinstance(var_dict, str):
+        table = var_dict.split('_')[0]
+        varname = var_dict.split('_')[1]
     else:
-        table = key_split[0]
-        varname = key_split[1]
-
+        print('get_table_and_varname: cannot handle variable name ' + var_dict )
+        sys.exit(1)
+   
     return table, varname
  
 
