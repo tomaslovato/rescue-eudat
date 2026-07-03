@@ -1,13 +1,9 @@
+# This script translate to python instructions from b2share api submission guide 
+# https://docs.eudat.eu/b2share/rest/apisubmissionguide/
+
 import os, sys, glob
 import requests
 import yaml
-
-# EUDAT: https://b2share.eudat.eu/
-
-# GUIDE: https://docs.eudat.eu/b2share/rest/apisubmissionguide/
-
-# get info from record curl -k -X GET "https://b2share.eudat.eu/api/records/7yqzx-q5t41/draft"   -H "Content-Type: application/json"   -H "Authorization: Bearer pIUYZFq6RDuYsScHcP4ZBfzBzmKfG12b75wnl48HxoqAJ1w9uD99FXYtTyAy"
-
 
 def main():
     ''' Code main driver. '''
@@ -38,7 +34,7 @@ def main():
 
 
 def workflow(token, case, var_dict):
-    '''Workflow for EUDAT record creation and data upload.'''
+    '''Workflow for EUDAT record creation, data upload and submit review request.'''
 
     # gather files and variables
     dataset = get_dataset_dict(case, var_dict)
