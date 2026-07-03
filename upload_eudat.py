@@ -13,6 +13,7 @@ def main():
     ''' Code main driver. '''
     from pathlib import Path
 
+    # read b2share token (strip last character '\n')
     MY_TOKEN = Path('MY_TOKEN').read_text()[:-1]
 
     # read arguments
@@ -31,7 +32,7 @@ def main():
     for var in variables['variables']:
         workflow(MY_TOKEN, case, var)
 
-    print('done')
+    print('Completed')
 
     return
 
@@ -46,44 +47,32 @@ def workflow(token, case, var_dict):
     payload = get_paylod_dict(case, var_dict, dataset)
 
     # create record
-    print("Create Record")
-    try:
-        result = create_b2share_record(token=token, payload=payload)
-        http_draft = result['links']['self_html']
-        print("Successfully created record: " + http_draft +  "!\n")
-        rid = result['id']
-    except requests.exceptions.HTTPError as err:
-        print(f"HTTP Error occurred: {err}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
+    #print("Create Record")
+    result = create_b2share_record(token=token, payload=payload)
+    http_draft = result['links']['self_html']
+    print("Successfully created record: " + http_draft +  "!\n")
+    rid = result['id']
+    
     # Add file metadata into record
-    print("Register files metadata")
-    try:
-        result = register_draft_files(
-            token=token, record_id=rid, dataset=dataset
-        )
-        print("Files registered to draft successfully!\n")
-    except requests.exceptions.HTTPError as err:
-        print(f"HTTP Error occurred: {err}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    #print("Register files metadata")
+    result = register_draft_files(
+        token=token, record_id=rid, dataset=dataset
+    )
+    print("Files registered to draft successfully!\n")
 
     # Upload and commit file content
-    print("Start files upload and commit")
-    try:
-        result = upload_and_commit_file_to_draft(
-            token=token,
-            record_id=rid,
-            dataset=dataset
-        )
-        print("File uploaded successfully!\n")
-    except requests.exceptions.HTTPError as err:
-        print(f"HTTP Error occurred: {err}")
+    print("Start file(s) upload and commit")
+    result = upload_and_commit_file_to_draft(
+        token=token, record_id=rid, dataset=dataset
+    )
+    print("File(s) uploaded successfully!\n")
 
-    # Create a request to submit to a community
+    ## Create a request to submit to a community
+    #result = submit_draft_for_review(token=token, record_id=rid)
+    #submit_link = result['links']['actions']['submit']
 
-    # Submit the record to the community
+    ## Submit the record to the community
+    #result = request_draft_review(token=token, submit_link=submit_link)
 
     return
 
@@ -185,15 +174,18 @@ def create_b2share_record(token: str, payload: dict) -> dict:
         "Authorization": f"Bearer {token}",
     }
 
-    # Making the request. verify=False handles the '-k' insecure flag.
-    response = requests.post(
-        url, json=payload, headers=headers,
-    )
-
-    # Raise an exception if the response status is 4xx or 5xx
-    response.raise_for_status()
-
-    return response.json()
+    try:
+        # Making the request.
+        response = requests.post(url, json=payload, headers=headers,)
+        # Raise an exception if the response status is 4xx or 5xx
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+        if response is not None:
+            print(f"Status Code: {response.status_code}")
+            print(f"Response: {response.text}")
+            sys.exit(1)
 
 
 def register_draft_files(token: str, record_id: str, dataset: dict) -> list:
@@ -215,16 +207,19 @@ def register_draft_files(token: str, record_id: str, dataset: dict) -> list:
     for var in dataset.keys():
         var_files = [{'key': os.path.basename(file)} for file in dataset[var]['files']]
         files_list = files_list + var_files
-
-    # Making the POST request.
-    # Note: If you need to bypass SSL errors like the previous `-k` command,
-    # add `verify=False` to the post arguments below.
-    response = requests.post(url, json=files_list, headers=headers)
-
-    # Raise an exception if the response status is 4xx or 5xx
-    response.raise_for_status()
-
-    return response.json()
+ 
+    try: 
+        # Making the POST request.
+        response = requests.post(url, json=files_list, headers=headers)
+        # Raise an exception if the response status is 4xx or 5xx
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+        if response is not None:
+            print(f"Status Code: {response.status_code}")
+            print(f"Response: {response.text}")
+            sys.exit(1)
 
 
 def upload_and_commit_file_to_draft(token: str, record_id: str,  dataset: dict) -> dict:
@@ -294,32 +289,42 @@ def submit_draft_for_review(token: str, record_id: str,) -> list:
         "type": "community-submission"
     }
     
-    response = requests.put(url, headers=headers, json=payload)
+    try:
+        response = requests.put(url, headers=headers, json=payload)
+        # Raises an HTTPError if the response code was an error (4xx or 5xx)
+        response.raise_for_status() 
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+        if response is not None:
+            print(f"Status Code: {response.status_code}")
+            print(f"Response: {response.text}")
+            sys.exit(1)
 
-    # Raises an HTTPError if the response code was an error (4xx or 5xx)
-    response.raise_for_status() 
 
-    return response.json()
-
-
-def request_draft_review(token: str, response_link: str) -> list:
-    """Sends a POST request to record submission using response_link.
+def request_draft_review(token: str, submit_link: str) -> list:
+    """Sends a POST request to record submission using submit_link.
     
     :param token: Your API bearer access token.
-    :param response_link: The full URL endpoint ("<response_link>").
+    :param submit_link: The full URL endpoint ("<submit_link>").
     :return: Response JSON dictionary if successful, None otherwise.
     """
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
     
-    # Performing the POST request
-    response = requests.post(response_link, headers=headers)
-    
-    # Raises an HTTPError if the response code was an error (4xx or 5xx)
-    response.raise_for_status() 
-    
-    return response.json()
+    try:
+       # Performing the POST request
+       response = requests.post(submit_link, headers=headers)
+       # Raises an HTTPError if the response code was an error (4xx or 5xx)
+       response.raise_for_status() 
+       return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+        if response is not None:
+            print(f"Status Code: {response.status_code}")
+            print(f"Response: {response.text}")
+            sys.exit(1)
 
 
 def cmip_freq_long(freq):
