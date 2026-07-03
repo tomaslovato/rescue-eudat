@@ -121,12 +121,12 @@ def get_paylod_dict(case, var_dict, dataset):
 
     # load templates
     payload = yaml.safe_load(open(case['payload_template']))
-    members= yaml.safe_load(open(case['members']))
+    authors= yaml.safe_load(open(case['authors']))
    
     # fill in
     payload['metadata']['publication_date'] = case['publication_date']
     for role in ['creators', 'contributors']:
-        payload['metadata'][role] = members[role]
+        payload['metadata'][role] = authors[role]
     for date in ['start_date', 'end_date']:
         payload['metadata']['temporal_coverage'][0]['ranges'][date] = case[date]
 

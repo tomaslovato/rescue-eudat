@@ -6,7 +6,7 @@ end_date: '2100-12-31'
 publication_date: '2026-07-02'
 #
 payload_template: 'schema_eudat_cmcc.yaml'
-members: 'members.yaml'
+authors: 'authors.yaml'
 #
 input_path: '/work/cmcc/tl28319/reformatter_rescue/CMIP6/RESCUE/CMCC/CMCC-ESM2'
 member: 'r1i1p1f1'
