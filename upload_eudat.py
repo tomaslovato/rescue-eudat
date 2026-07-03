@@ -11,6 +11,7 @@ def main():
 
     # read b2share token (strip last character '\n')
     MY_TOKEN = Path('MY_TOKEN').read_text()[:-1]
+    print('read token from file MY_TOKEN.\n')
 
     # read arguments
     nargs=len(sys.argv)
