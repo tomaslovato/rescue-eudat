@@ -68,6 +68,8 @@ A structured dictionary capturing absolute credit details (such as ORCID codes, 
 These records are automatically injected by the code into the payload layout.
 
 ## 3. Tool Usage
+**The script always generate a new record. Updates to existing records needs to be implemeted.**
+
 Run the main driver script by passing your primary experiment settings YAML file (e.g. `esm-500-actall.yaml`) as a command-line argument:
 ```bash
 $> python upload_eudat.py esm-500-actall.yaml
