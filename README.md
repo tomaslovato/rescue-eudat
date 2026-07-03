@@ -23,7 +23,7 @@ The tool relies on four specific YAML support files to dynamically combine proje
 
 ###  1. variables.yaml
 This file outlines the specific CMIP6 tables and variables you want to extract and process from your data storage. 
-Input fields are collected as list items within the dictionary key `variables`, such that duplicated Table_VariableName definitions can be handled. 
+Input fields are collected as list items within the dictionary key `variables`, such that duplicated Table_VariableName definitions can be defined by the user (see e.g. 'Temporal Subset of Single Variable Format'). 
 
 Three distinct formatting layouts are supported:
 
