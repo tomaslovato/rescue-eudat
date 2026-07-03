@@ -91,17 +91,27 @@ def get_dataset_dict(case, var_dict):
     else:
        var_list = [varname]
 
+    # has variable specific time span
+    filter_years = None
+    if varname is not None and isinstance(var_dict, dict):
+        key_dict = var_dict[table + '_' + varname]
+        filter_years = [str(x) for x in range(int(key_dict['start_date'][:4]), int(key_dict['end_date'][:4])+1)]
+
     # find files
     for var in var_list:
         file_pattern = in_path + '/**/*' + var + '*' + table + '*.nc'
         files = sorted(glob.glob(file_pattern, recursive=True))
+
         if not files:
             print('No files found searching :' + file_pattern)
             sys.exit(1)
-        else:
-            ds = xr.open_dataset(files[0])
-            dataset[var] = {'long_name': ds[var].attrs['long_name'], 'units': ds[var].attrs['units'], 'files' : files}
-            ds.close()
+
+        if filter_years is not None:
+            files = [file for file in files if any(year in file for year in filter_years) ]
+
+        ds = xr.open_dataset(files[0])
+        dataset[var] = {'long_name': ds[var].attrs['long_name'], 'units': ds[var].attrs['units'], 'files' : files}
+        ds.close()
     
     return dataset
 
@@ -120,14 +130,21 @@ def get_paylod_dict(case, var_dict, dataset):
     for date in ['start_date', 'end_date']:
         payload['metadata']['temporal_coverage'][0]['ranges'][date] = case[date]
 
-    # year span label
-    year_span = case['start_date'][:4] + '-' + case['end_date'][:4]
-
-    # title
-    new_title = payload['metadata']['title'].replace('expname',case['experiment']).replace('yearspan', year_span)
-
     # get variables
     table, varname = get_table_and_varname(var_dict)
+
+    # title
+    new_title = payload['metadata']['title'].replace('expname',case['experiment'])
+
+    # add year span label (used also in description)
+    year_span = case['start_date'][:4] + '-' + case['end_date'][:4]
+    if varname is not None and isinstance(var_dict, dict):
+        key_dict = var_dict[table + '_' + varname]
+        year_span = key_dict['start_date'][:4] + '-' + key_dict['end_date'][:4]
+
+    new_title = new_title.replace('yearspan', year_span)
+
+    # add table and variable
     if varname is None:
         new_title = new_title + '_' + table
     else:
@@ -358,10 +375,16 @@ def get_table_and_varname(var_dict):
     if isinstance(var_dict, dict):  
         table = list(var_dict.keys())[0]
         varname = None
-        # TODO later on add case for year subsamples
+        # special case for year subsamples
+        if 'start_date' in var_dict[table]:
+            key_split = list(var_dict.keys())[0].split('_')
+            table = key_split[0]
+            varname = key_split[1]
+
     elif isinstance(var_dict, str):
         table = var_dict.split('_')[0]
         varname = var_dict.split('_')[1]
+
     else:
         print('get_table_and_varname: cannot handle variable name ' + var_dict )
         sys.exit(1)
