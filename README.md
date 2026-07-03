@@ -1,4 +1,4 @@
-# rescue-eudat-upload
+# rescue-eudat
 
 A Python tool designed to automate dataset record creation, placeholder registration, and file content uploads onto the [EUDAT B2SHARE](https://b2share.eudat.eu/) platform. 
 The tool formats metadata tailored to CMCC Foundation (Euro-Mediterranean Center on Climate Change Foundation) climate simulations under the Horizon Europe [RESCUE](https://rescue-climate.eu/) project (Grant Agreement no. 10105693).
