@@ -39,7 +39,7 @@ variables:
 - Omon_thetao
 ```
 
-- **Temporal Subset of Single Variable Format (Dictionary)**: as in the above, it targets a single Table_VariableName mapping but confines the processing to a specific chronological boundary. This applies to large size high-frequency datasets that have to split over multiple records.
+- **Temporal Subset of Single Variable Format (Dictionary)**: as in the above, it targets a single Table_VariableName mapping but confines the processing to a specific chronological boundary. This applies to large size high-frequency datasets that have to be split over multiple records. The specific chronological boundary overrides the general naming convention set in the experiment case (e.g. `esm-500-actall.yaml`) for these variable records.
 ```yaml
 variables:
 - 6hr_hfls: {start_date: '2015-01-01', end_date: '2059-12-31'}
