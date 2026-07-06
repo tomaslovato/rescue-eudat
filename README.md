@@ -33,10 +33,10 @@ variables:
 - SImon: {'variables':['siage', 'siconc', 'sithick'],}
 ```
 
-- **Single Variable Format (String)**: A single Table_VariableName string for straightforward mapping.
+- **Single Variable Format (String)**: A single Table_VariableName as empty dictionary for straightforward mapping.
 ```yaml
 variables:
-- Omon_thetao
+- Omon_thetao: {}
 ```
 
 - **Temporal Subset of Single Variable Format (Dictionary)**: as in the above, it targets a single Table_VariableName mapping but confines the processing to a specific chronological boundary. This applies to large size high-frequency datasets that have to be split over multiple records. The specific chronological boundary overrides the general naming convention set in the experiment case (e.g. `esm-500-actall.yaml`) for these variable records.
@@ -55,6 +55,16 @@ This case file outlines the active climate simulation parameters, specifying exa
 - `payload_template` / `authors`: Pointers to the respective metadata schemas and author matrices.
 
 - `input_path` / `member`: Absolute system directory path to the NetCDF dataset structure and the targeted ensemble run variant label (e.g., `r1i1p1f1`).
+
+The experiment file is then populated with the list of variables, which are then used instead of the `variables.yaml` file. For each variable in the experiment file are then added the following dictionary items
+
+- `record_id`: the b2share associated record for the specific variable. If changes are made to the `schema_eudat_cmcc.yaml` and/or `authors.yaml` the content is updated accordingly to the associated record.
+
+- `uploaded`: set to `True` once that all files are correctly uploaded.
+
+- `submitted`: set to `True` once that the review request is successfully submitted.
+
+To reset a variable and create a new record and submission remove these three items from the variable dictionary in the experiment file
 
 ### 3. schema_eudat_cmcc.yaml
 Acts as the basic EUDAT B2SHARE metadata payload layout. 
