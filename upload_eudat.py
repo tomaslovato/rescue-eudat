@@ -8,6 +8,7 @@ import yaml
 def main():
     ''' Code main driver. '''
     from pathlib import Path
+    import copy
 
     # read b2share token (strip last character '\n')
     MY_TOKEN = Path('MY_TOKEN').read_text()[:-1]
@@ -21,12 +22,16 @@ def main():
 
     # load experiment settings
     case = yaml.safe_load(open(casefile))
+    case['filename'] = casefile
     print('Process input: ' + casefile + '\n' )
 
     # load variables dict
-    variables = yaml.safe_load(open("variables.yaml"))
+    if 'variables' not in case.keys():
+        case['variables'] = yaml.safe_load(open("variables.yaml"))['variables']
+ 
+    variables = copy.deepcopy(case['variables'])
 
-    for var in variables['variables']:
+    for var in variables:
         workflow(MY_TOKEN, case, var)
 
     print('Completed')
@@ -34,64 +39,80 @@ def main():
     return
 
 
-def workflow(token, case, var_dict):
+def workflow(token, case, in_var):
     '''Workflow for EUDAT record creation, data upload and submit review request.'''
 
+    key = list(in_var.keys())[0]
+
+    record_id = None
+    if 'record_id' in in_var[key]:
+        record_id = in_var[key]['record_id']
+        check_record_exists(key, record_id)
+
     # gather files and variables
-    dataset = get_dataset_dict(case, var_dict)
+    dataset = get_dataset_dict(case, in_var)
 
     # prepare payload
-    payload = get_paylod_dict(case, var_dict, dataset)
+    payload = get_paylod_dict(case, in_var, dataset)
 
     # create record
-    #print("Create Record")
-    result = create_b2share_record(token=token, payload=payload)
+    result = manage_b2share_record(token=token, payload=payload, record_id=record_id)
     http_draft = result['links']['self_html']
-    print("Successfully created record: " + http_draft +  "!\n")
-    rid = result['id']
+    print("Successfully created/updated record: " + http_draft +  "!\n")
+
+    # associate record id to variable
+    if record_id is None:
+        in_var[key]['record_id'] = result['id']
+        update_case_yaml(case, in_var)
     
-    # Add file metadata into record
-    #print("Register files metadata")
-    result = register_draft_files(
-        token=token, record_id=rid, dataset=dataset
-    )
-    print("Files registered to draft successfully!\n")
+    if 'uploaded' not in in_var[key]:
+        # Add file metadata into record
+        result = register_draft_files(
+            token=token, record_id=record_id, dataset=dataset
+        )
+        print("Files registered to draft successfully!\n")
 
-    # Upload and commit file content
-    print("Start file(s) upload and commit")
-    result = upload_and_commit_file_to_draft(
-        token=token, record_id=rid, dataset=dataset
-    )
-    print("File(s) uploaded successfully!\n")
+        # Upload and commit file content
+        print("Start file(s) upload and commit")
+        result = upload_and_commit_file_to_draft(
+            token=token, record_id=record_id, dataset=dataset
+        )
+        print("File(s) uploaded successfully!\n")
+        in_var[key]['uploaded'] = True
+        update_case_yaml(case, in_var)
 
-    ## Create a request to submit to a community
-    #result = submit_draft_for_review(token=token, record_id=rid)
-    #submit_link = result['links']['actions']['submit']
+    if 'submitted' not in in_var[key]:
+        ## Create a request to submit to a community
+        result = submit_draft_for_review(token=token, record_id=record_id)
+        submit_link = result['links']['actions']['submit']
 
-    ## Submit the record to the community
-    #result = request_draft_review(token=token, submit_link=submit_link)
+        ## Submit the record to the community
+        result = request_draft_review(token=token, submit_link=submit_link)
+        print("Record submitted for review!\n")
+        in_var[key]['submitted'] = True
+        update_case_yaml(case, in_var)
 
     return
 
 
-def get_dataset_dict(case, var_dict):
+def get_dataset_dict(case, in_var):
     '''Create payload dict for following steps'''
     import xarray as xr
 
     dataset = {}
 
-    table, varname = get_table_and_varname(var_dict)
+    table, varname = get_table_and_varname(in_var)
     in_path = '/'.join([case['input_path'], case['experiment'], case['member'], table])
 
     if varname is None:
-       var_list = var_dict[table]['variables']
+       var_list = in_var[table]['variables']
     else:
        var_list = [varname]
 
     # has variable specific time span
     filter_years = None
-    if varname is not None and isinstance(var_dict, dict):
-        key_dict = var_dict[table + '_' + varname]
+    if varname is not None and isinstance(in_var, dict):
+        key_dict = in_var[table + '_' + varname]
         filter_years = [str(x) for x in range(int(key_dict['start_date'][:4]), int(key_dict['end_date'][:4])+1)]
 
     # find files
@@ -113,7 +134,7 @@ def get_dataset_dict(case, var_dict):
     return dataset
 
 
-def get_paylod_dict(case, var_dict, dataset):
+def get_paylod_dict(case, in_var, dataset):
     '''Create payload dict for following steps'''
 
     # load templates
@@ -128,15 +149,15 @@ def get_paylod_dict(case, var_dict, dataset):
         payload['metadata']['temporal_coverage'][0]['ranges'][date] = case[date]
 
     # get variables
-    table, varname = get_table_and_varname(var_dict)
+    table, varname = get_table_and_varname(in_var)
 
     # title
     new_title = payload['metadata']['title'].replace('expname',case['experiment'])
 
     # add year span label (used also in description)
     year_span = case['start_date'][:4] + '-' + case['end_date'][:4]
-    if varname is not None and isinstance(var_dict, dict):
-        key_dict = var_dict[table + '_' + varname]
+    if varname is not None and isinstance(in_var, dict):
+        key_dict = in_var[table + '_' + varname]
         year_span = key_dict['start_date'][:4] + '-' + key_dict['end_date'][:4]
 
     new_title = new_title.replace('yearspan', year_span)
@@ -172,15 +193,16 @@ def get_paylod_dict(case, var_dict, dataset):
     return payload
 
 
-def create_b2share_record(token: str, payload: dict) -> dict:
-    """Sends a POST request to the B2SHARE API to create a new record.
+#
+#  b2share interface
+#
+def manage_b2share_record(token: str, payload: dict, record_id: str) -> dict:
+    """Sends a POST request to the B2SHARE API to create or update a new record.
 
     :param token: The Bearer token for authentication.
     :param payload: data payload.
     :return: The JSON response from the API or raises an HTTPError.
     """
-    url = "https://b2share.eudat.eu/api/records"
-
     # Set up headers (Note: -k in curl bypasses SSL verification.
     # To mimic -k, we set verify=False inside requests.post below)
     headers = {
@@ -189,8 +211,14 @@ def create_b2share_record(token: str, payload: dict) -> dict:
     }
 
     try:
-        # Making the request.
-        response = requests.post(url, json=payload, headers=headers,)
+        # Create record (POST) or update record (PUT)
+        if record_id is None:
+            url = "https://b2share.eudat.eu/api/records"
+            response = requests.post(url, json=payload, headers=headers,)
+        else:
+            url = f"https://b2share.eudat.eu/api/records/{record_id}/draft"
+            response = requests.put(url, json=payload, headers=headers,)
+
         # Raise an exception if the response status is 4xx or 5xx
         response.raise_for_status()
         return response.json()
@@ -345,6 +373,42 @@ def request_draft_review(token: str, submit_link: str) -> list:
     return response.json()
     
 
+#
+# Utilities
+#
+def check_record_exists(in_var, record_id):
+    """Check if record URL exists. If not stop"""
+
+    record_url = f"https://b2share.eudat.eu/uploads/{record_id}"
+    response = requests.get(record_url)
+    if response.status_code == 200:
+        return 
+    else:
+        print('Not exisisting record: ' + record_url)
+        print(f"Remove 'record_id' from {in_var} dictionary within <case>.yaml")
+        sys.exit(1)
+
+
+def update_case_yaml(case, in_var):
+    """Associate record_id to variable and dump into <case>.yaml."""
+
+    var_list = []
+    for var in case['variables']:
+        if var.keys() == in_var.keys():
+            var_list.append(in_var)
+        else:
+            var_list.append(var)
+
+    # update case
+    case['variables'] = var_list
+
+    # save to file
+    outfile = case['filename']
+    yaml.dump(case, open(outfile,'w'), default_flow_style=False)
+ 
+    return
+
+
 def cmip_freq_long(freq):
     '''Return dataset frequency description '''
     freq_dict = {
@@ -370,24 +434,19 @@ def cmip_freq_long(freq):
     return freq_description
 
 
-def get_table_and_varname(var_dict):
-    """Get table and variable names from input dict/list."""
+def get_table_and_varname(in_var):
+    """Get table and variable names from dictionary key"""
     
-    if isinstance(var_dict, dict):  
-        table = list(var_dict.keys())[0]
-        varname = None
-        # special case for year subsamples
-        if 'start_date' in var_dict[table]:
-            key_split = list(var_dict.keys())[0].split('_')
-            table = key_split[0]
+    if isinstance(in_var, dict):
+        key_split = list(in_var.keys())[0].split('_')
+        table = key_split[0]
+        if len(key_split)>1:
             varname = key_split[1]
-
-    elif isinstance(var_dict, str):
-        table = var_dict.split('_')[0]
-        varname = var_dict.split('_')[1]
+        else:
+            varname = None
 
     else:
-        print('get_table_and_varname: cannot handle variable name ' + var_dict )
+        print('get_table_and_varname: cannot handle variable name ' + in_var )
         sys.exit(1)
    
     return table, varname
