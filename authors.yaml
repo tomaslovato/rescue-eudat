@@ -6,6 +6,8 @@ creators:
     identifiers:
     - identifier: 0000-0002-5188-6767
       scheme: orcid
+  role:
+    id: contactperson
   affiliations:
   - id: 01tf11a61
     name: CMCC Foundation - Euro-Mediterranean Center on Climate Change
@@ -24,6 +26,8 @@ contributors:
     identifiers:
     - identifier: 0000-0002-6975-4447
       scheme: orcid
+  role:
+    id: projectmember
   affiliations:
   - id: 01tf11a61
     name: CMCC Foundation - Euro-Mediterranean Center on Climate Change
@@ -41,6 +45,8 @@ contributors:
     identifiers:
     - identifier: 0009-0006-6586-8179
       scheme: orcid
+  role:
+    id: projectmember
   affiliations:
   - id: 01tf11a61
     name: CMCC Foundation - Euro-Mediterranean Center on Climate Change
@@ -58,6 +64,8 @@ contributors:
     identifiers:
     - identifier: 0009-0001-2331-4323
       scheme: orcid
+  role:
+    id: projectmember
   affiliations:
   - id: 01tf11a61
     name: CMCC Foundation - Euro-Mediterranean Center on Climate Change
@@ -75,6 +83,8 @@ contributors:
     identifiers:
     - identifier: 0000-0001-7551-4768
       scheme: orcid
+  role:
+    id: projectmember
   affiliations:
   - id: 01tf11a61
     name: CMCC Foundation - Euro-Mediterranean Center on Climate Change
@@ -92,6 +102,8 @@ contributors:
     identifiers:
     - identifier: 0000-0002-4592-9927
       scheme: orcid
+  role:
+    id: projectmember
   affiliations:
   - id: 01tf11a61
     name: CMCC Foundation - Euro-Mediterranean Center on Climate Change
