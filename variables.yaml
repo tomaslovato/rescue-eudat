@@ -1,6 +1,6 @@
 variables:
 - SImon: {'variables':['siage', 'siconc', 'sithick'],}
-- Oday_sios
-- Omon_thetao
+- Oday_sios: {}
+- Omon_thetao: {}
 - 6hr_hfls: {start_date: '2015-01-01', end_date: '2059-12-31'}
 - 6hr_hfls: {start_date: '2060-01-01', end_date: '2100-12-31'}
