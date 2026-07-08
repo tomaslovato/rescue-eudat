@@ -58,23 +58,18 @@ def workflow(token, case, in_var):
     # create record
     result = manage_b2share_record(token=token, payload=payload, record_id=record_id)
     http_draft = result['links']['self_html']
-    print("Successfully created/updated record: " + http_draft +  "!\n")
+    print("Successfully created/updated record: " + http_draft +  "\n")
 
     # associate record id to variable
     if record_id is None:
-        in_var[key]['record_id'] = result['id']
+        record_id = result['id']
+        in_var[key]['record_id'] = record_id
         update_case_yaml(case, in_var)
     
     if 'uploaded' not in in_var[key]:
-        # Add file metadata into record
-        result = register_draft_files(
-            token=token, record_id=record_id, dataset=dataset
-        )
-        print("Files registered to draft successfully!\n")
-
-        # Upload and commit file content
-        print("Start file(s) upload and commit")
-        result = upload_and_commit_file_to_draft(
+        # Draft, upload and commit file
+        print("Start file(s) upload")
+        result = upload_file_to_record(
             token=token, record_id=record_id, dataset=dataset
         )
         print("File(s) uploaded successfully!\n")
@@ -82,12 +77,8 @@ def workflow(token, case, in_var):
         update_case_yaml(case, in_var)
 
     if 'submitted' not in in_var[key]:
-        ## Create a request to submit to a community
-        result = submit_draft_for_review(token=token, record_id=record_id)
-        submit_link = result['links']['actions']['submit']
-
-        ## Submit the record to the community
-        result = request_draft_review(token=token, submit_link=submit_link)
+        ## submit record for review to a community
+        submit_draft_review(token=token, record_id=record_id)
         print("Record submitted for review!\n")
         in_var[key]['submitted'] = True
         update_case_yaml(case, in_var)
@@ -230,41 +221,7 @@ def manage_b2share_record(token: str, payload: dict, record_id: str) -> dict:
             sys.exit(1)
 
 
-def register_draft_files(token: str, record_id: str, dataset: dict) -> list:
-    """Registers placeholder entries for files to be uploaded to a draft record.
-
-    :param token: The Bearer token for authentication.
-    :param record_id: The ID of the draft record ($RID).
-    :param dataset: dictionary organized by variables with data to upload
-    :return: The JSON response list from the API or raises an HTTPError.
-    """
-    url = f"https://b2share.eudat.eu/api/records/{record_id}/draft/files"
-
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {token}",
-    }
-
-    files_list = []
-    for var in dataset.keys():
-        var_files = [{'key': os.path.basename(file)} for file in dataset[var]['files']]
-        files_list = files_list + var_files
- 
-    try: 
-        # Making the POST request.
-        response = requests.post(url, json=files_list, headers=headers)
-        # Raise an exception if the response status is 4xx or 5xx
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"An error occurred: {e}")
-        if response is not None:
-            print(f"Status Code: {response.status_code}")
-            print(f"Response: {response.text}")
-            sys.exit(1)
-
-
-def upload_and_commit_file_to_draft(token: str, record_id: str, dataset: dict) -> dict:
+def upload_file_to_record(token: str, record_id: str, dataset: dict) -> dict:
     """Uploads anc commit a local file's content to a registered placeholder in a draft record.
 
     :param token: The Bearer token for authentication.
@@ -278,40 +235,48 @@ def upload_and_commit_file_to_draft(token: str, record_id: str, dataset: dict) -
             file_name = os.path.basename(file_path)
             print(' - ' + file_name)
 
-            ## upload
+            ## DRAFT
+            url = f"https://b2share.eudat.eu/api/records/{record_id}/draft/files"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {token}",
+            }
+            file_draft = [{'key': os.path.basename(file_name)}]
+            # making the POST request
+            response = requests.post(url, json=file_draft, headers=headers)
+            # Raise an exception if the response status is 4xx or 5xx
+            response.raise_for_status()
+
+            ## UPLOAD
             url = f"https://b2share.eudat.eu/api/records/{record_id}/draft/files/{file_name}/content"
             headers = {
                 "Authorization": f"Bearer {token}",
                 "Content-Type": "application/octet-stream",
             }
-
             # Open the file in binary mode and stream it using PUT
             with open(file_path, "rb") as file_data:
                 response = requests.put(url, data=file_data, headers=headers)
-
             # Raise an exception if the response status is 4xx or 5xx
             response.raise_for_status()
 
-            ## commit
+            ## COMMIT
             url = f"https://b2share.eudat.eu/api/records/{record_id}/draft/files/{file_name}/commit"
             headers = {
                 "Authorization": f"Bearer {token}",
             }
-
             # Making the POST request to commit the file.
             # Note: B2SHARE expects a POST with no body here.
             response = requests.post(url, headers=headers)
-        
             # Raise an exception if the response status is 4xx or 5xx
             response.raise_for_status()
 
     return response.json()
 
 
-def submit_draft_for_review(token: str, record_id: str,) -> list:
-    """Submits a draft record for review in B2SHARE.
+def submit_draft_review(token: str, record_id: str,) -> list:
+    """Submits a draft record and send request for review in B2SHARE.
     
-    :param record_id: The ID of the draft record ($RID).
+    :param record_id: The ID of the draft record (record_id).
     :param access_token: Your B2SHARE API bearer access token.
     :param community_id: The ID of the community to submit to.
     :return: The JSON response from the API or raises an HTTPError.
@@ -319,23 +284,21 @@ def submit_draft_for_review(token: str, record_id: str,) -> list:
     # EUDAT community id (curl -k -X GET "https://b2share.eudat.eu/api/communities/eudat")
     community_id = "e9b9792e-79fb-4b07-b6b4-b9c2bd06d095"
 
+
+    ## Submit draft record to community
     url = f"https://b2share.eudat.eu/api/records/{record_id}/draft/review"
-    
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
     }
-    
     payload = {
         "receiver": { "community": community_id },
         "type": "community-submission"
     }
-    
     try:
         response = requests.put(url, headers=headers, json=payload)
         # Raises an HTTPError if the response code was an error (4xx or 5xx)
         response.raise_for_status() 
-        return response.json()
     except requests.exceptions.RequestException as e:
         print(f"An error occurred: {e}")
         if response is not None:
@@ -343,26 +306,17 @@ def submit_draft_for_review(token: str, record_id: str,) -> list:
             print(f"Response: {response.text}")
             sys.exit(1)
 
-    return response.json()
-
-
-def request_draft_review(token: str, submit_link: str) -> list:
-    """Sends a POST request to record submission using submit_link.
-    
-    :param token: Your API bearer access token.
-    :param submit_link: The full URL endpoint ("<submit_link>").
-    :return: Response JSON dictionary if successful, None otherwise.
-    """
+    ## Send a request for record review
+    result = response.json()
+    submit_link = result['links']['actions']['submit']
     headers = {
-        "Authorization": f"Bearer {access_token}"
+        "Authorization": f"Bearer {token}"
     }
-    
     try:
        # Performing the POST request
        response = requests.post(submit_link, headers=headers)
        # Raises an HTTPError if the response code was an error (4xx or 5xx)
-       response.raise_for_status() 
-       return response.json()
+       response.raise_for_status()
     except requests.exceptions.RequestException as e:
         print(f"An error occurred: {e}")
         if response is not None:
@@ -370,8 +324,8 @@ def request_draft_review(token: str, submit_link: str) -> list:
             print(f"Response: {response.text}")
             sys.exit(1)
 
-    return response.json()
-    
+    return
+
 
 #
 # Utilities
