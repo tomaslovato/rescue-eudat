@@ -358,7 +358,7 @@ def update_case_yaml(case, in_var):
 
     # save to file
     outfile = case['filename']
-    yaml.dump(case, open(outfile,'w'), default_flow_style=False)
+    yaml.dump(case, open(outfile,'w'), default_flow_style=False, sort_keys=False)
  
     return
 
