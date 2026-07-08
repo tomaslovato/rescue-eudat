@@ -87,7 +87,7 @@ def workflow(token, case, in_var):
 
 
 def get_dataset_dict(case, in_var):
-    '''Create payload dict for following steps'''
+    '''Create dataset dict with keys named after collection and items the list of full path files to iupload'''
     import xarray as xr
 
     dataset = {}
