@@ -95,17 +95,11 @@ When executed, `upload_eudat.py` sequentially handles the entire workflow (see h
 
 3. **Payload Rendering** (`get_paylod_dict`): Compiles the full metadata mapping using the template files and injects custom dynamic HTML tags. Tailored to CMCC data catalogue.
 
-4. **Draft Creation** (`create_b2share_record`): Issues a B2SHARE API POST request to seed a new draft dataset within the EUDAT system, generating a unique draft ID URL link.
+4. **Draft Creation** (`manage_b2share_record`): Issues a B2SHARE API POST request to seed a new draft dataset within the EUDAT system, generating a unique draft ID URL link. If a record id is already associated to the variable it only PUT latest metadata info in the record.
 
-5. **Placeholder Registration** (`register_draft_files`): Registers empty file placeholders onto the active draft.
+5. **Upload data to record (`upload_file_to_record`): Create data file draft, upload local NetCDF files using binary coding to the EUDAT service via stream, and immediately commit upon delivery.
 
-6. **Binary Stream Upload of Data** (`upload_and_commit_file_to_draft`): Local NetCDF files are sent using binary coding to the EUDAT service via stream loops directly perfoming each file upload and immediately commit upon delivery.
-
-#### TODO: code in place but commented in workflow function, NEED TO BE TESTED
-
-7. **Submit draft review** (`submit_draft_for_review`): create a submit request for review of the finalized drat to the `EUDAT` community
-
-8. **Request review** (`request_draft_review`): send the submit request for review
+7. **Submit draft and request review** (`submit_draft_review`): create a submit request for review of the finalized draft to the `EUDAT` community and send the submit request
 
 ## 4. miscellanea
 
