@@ -1,4 +1,5 @@
-# This script translate to python instructions from b2share api submission guide 
+# This script allows to upload CMCC data to B2SHARE service of EUDAT
+# B2SHARE interface functions translate to python instructions from b2share api submission guide 
 # https://docs.eudat.eu/b2share/rest/apisubmissionguide/
 '''
     Upload to b2share EUDAT Service the CMCC model output formatted accoriding to CMIP6-like standards.
@@ -104,7 +105,7 @@ def workflow(token, case, in_var):
 
 
 def get_dataset_dict(case, in_var):
-    '''Create dataset dict with keys named after collection and items the list of full path files to iupload'''
+    '''Create dataset dict with keys named after collection and items the list of full path files to upload'''
     import xarray as xr
 
     dataset = {}
