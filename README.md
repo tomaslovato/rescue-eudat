@@ -12,7 +12,7 @@ Ensure you have the following Python packages (and dependencies) installed:
 * `xarray`
 
 ## 2. Authentication Token
-Create a plain text file named `MY_TOKEN` in the root directory of this repository (it won't show using git as it was addded to `.gitignore` list to avoid commit errors). 
+Create a plain text file named `MY_TOKEN` in the root directory of this repository (it won't show using git as it was added to `.gitignore` list to avoid commit errors). 
 Paste your EUDAT B2SHARE personal API access token inside it, as in the following shell example:
 ```bash
 echo "YOUR_B2SHARE_BEARER_TOKEN" > MY_TOKEN
@@ -33,7 +33,7 @@ variables:
 - SImon: {'variables':['siage', 'siconc', 'sithick'],}
 ```
 
-- **Single Variable Format (String)**: A single Table_VariableName as empty dictionary for straightforward mapping.
+- **Single Variable Format (Dictionary)**: A single Table_VariableName as empty dictionary for straightforward mapping.
 ```yaml
 variables:
 - Omon_thetao: {}
