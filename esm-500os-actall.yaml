@@ -1,0 +1,11 @@
+experiment: esm-500os-actall
+description: End of century budget at 500 GtCO2 with overshoot. Land forcing with
+  BECCS representation in LUC-LCC. Enabled CDR interventions using explicit OAE and
+  BECCS. This is a CO2 emission driven simulation.
+start_date: '2015-01-01'
+end_date: '2100-12-31'
+publication_date: '2026-07-02'
+payload_template: schema_eudat_cmcc.yaml
+authors: authors.yaml
+input_path: /work/cmcc/tl28319/reformatter_rescue/CMIP6/RESCUE/CMCC/CMCC-ESM2
+member: r1i1p1f1
