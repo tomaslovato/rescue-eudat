@@ -27,11 +27,20 @@ def main():
     ''' Code main driver. '''
     from pathlib import Path
     import copy
-
+    
+    min_len_token = 7
     # read b2share token (strip last character '\n')
-    MY_TOKEN = Path('MY_TOKEN').read_text()[:-1]
-    print('read token from file MY_TOKEN.\n')
-
+    if Path('MY_TOKEN').exists():
+        tmp_my_token = Path('MY_TOKEN').read_text()[:-1]
+        if (len(tmp_my_token)>min_len_token):
+            MY_TOKEN=tmp_my_token
+            print('read token from file MY_TOKEN.\n')
+        else:
+            print('String in MY_TOKEN is not a token\n')
+            sys.exit(1)
+    else:
+        print('File MY_TOKEN not found in {} \n'.format(Path().cwd()))
+        sys.exit(1)    
     # read arguments
     nargs=len(sys.argv)
     if nargs < 2:
